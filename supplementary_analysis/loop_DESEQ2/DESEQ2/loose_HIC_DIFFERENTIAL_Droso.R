@@ -4,16 +4,15 @@ library(dplyr)
 library(glue)
 library(DESeq2)
 
-
+#### Load data
 col.names=c('chrom1', 'start1', 'end1', 'chrom2', 'start2', 'end2', 'fc')
-
 final_table <- read.csv('LOOSE_hic_values_close.csv')
 print("USING HIC VALUES – WE CAN ALSO USE HIC VALUES CLOSE!!")
 
 conditions <- colnames(final_table)[1:(length(colnames(final_table))-2)]
+
+#### Format data into countData, colData, and rownames for DESeq2
 countData <- final_table[1:length(conditions)]
-
-
 shifted <- final_table$shifted
 places <- final_table$places
 
@@ -39,9 +38,8 @@ ends <- as.numeric(matrix(unlist(split), ncol = length(split), byrow=FALSE)[6, ]
 dists <- (ends-starts)/1000
 quartiles <- ntile(dists, 4)
 
-# normalizationFactors(dds) <- normFactors
-# need to get size factors too!
 
+#### Functions for running DESeq2 and plotting results
 process_conditions <- function(c1, c2, dds, prefix, output='output'){
 	res = results(dds, contrast=c("condition",  c1, c2))
 	sum(res[!is.na(res$padj), ]$padj < .05)
@@ -95,30 +93,8 @@ run_deseq <- function(normFactors, countData, prefix, output='output'){
 	combined_scaling <- 1/normFactors 
 
 	not_na <- (rowSums(is.na(combined_scaling))==0)
-	# combined_scaling <- combined_scaling[not_na, ] 
-	# sub_combined_scaling <- combined_scaling
-	# sub_combined_scaling['nc14_1'] <- sub_combined_scaling['nc14_1_1'] + sub_combined_scaling['nc14_2_1'] 
-	# sub_combined_scaling['nc14_2'] <- sub_combined_scaling['nc14_1_2'] + sub_combined_scaling['nc14_2_2'] 
-	# sub_combined_scaling['nc1.8_1'] <- sub_combined_scaling['nc1.8_1_1'] + sub_combined_scaling['nc1.8_2_1'] 
-	# sub_combined_scaling['nc1.8_2'] <- sub_combined_scaling['nc1.8_1_2'] + sub_combined_scaling['nc1.8_2_2']
-	# sub_combined_scaling['s10.12_1'] <- sub_combined_scaling['s10.12_1_1'] + sub_combined_scaling['s10.12_2_1'] 
-	# sub_combined_scaling['s10.12_2'] <- sub_combined_scaling['s10.12_1_2'] + sub_combined_scaling['s10.12_2_2']
-	# sub_combined_scaling <- subset(sub_combined_scaling, select = c(nc14_1, nc14_2, nc1.8_1, nc1.8_2, s10.12_1, s10.12_2))
 
 	sub_countData <- countData[not_na, ]
-	# sub_countData['nc14_1'] <- sub_countData['nc14_1_1'] + sub_countData['nc14_2_1'] 
-	# sub_countData['nc14_2'] <- sub_countData['nc14_1_2'] + sub_countData['nc14_2_2'] 
-	# sub_countData['nc1.8_1'] <- sub_countData['nc1.8_1_1'] + sub_countData['nc1.8_2_1'] 
-	# sub_countData['nc1.8_2'] <- sub_countData['nc1.8_1_2'] + sub_countData['nc1.8_2_2']
-	# sub_countData['s10.12_1'] <- sub_countData['s10.12_1_1'] + sub_countData['s10.12_2_1'] 
-	# sub_countData['s10.12_2'] <- sub_countData['s10.12_1_2'] + sub_countData['s10.12_2_2']
-	# sub_countData <- subset(sub_countData, select = c(nc14_1, nc14_2, nc1.8_1, 
-	# 												nc1.8_2, s10.12_1, s10.12_2
-													# nc14.FED.rerun_1_1, nc14.FED.rerun_1_2, 
-													# nc14.FED_1_1, nc14.FED_1_2,
-													# nc12.mitotic.FED_1_1, nc12.mitotic.FED_1_2 
-													# nc12.mitotic.FED.rerun_1_1, nc12.mitotic.FED.rerun_1_2 
-													# ))
 
 	shifted <- shifted[not_na]
 	quartiles <- quartiles[not_na]
@@ -153,17 +129,9 @@ run_deseq <- function(normFactors, countData, prefix, output='output'){
 	return(dds)
 }
 
-
-
-# normFactors <- read.csv('balanced_normalization_df.csv')
-# normFactors <- normFactors[c(-13, -14, -17, -18)]
+## Run DESeq2 with appropriate normalization factors
 normFactors <- read.csv('LOOSE_raw_normalization_df.csv')
 dds <- run_deseq(normFactors, countData, 'LOOSE_normalization_factors', output='replicate_results')
-# sizefacs <- sizeFactors(dds)
-# write.csv(sizefacs, './sizefacs_test.csv')
-
 save.image(file='rdata_for_evan.RData') 
 
-# sizefacs <- sizeFactors(dds)
-# write.csv(sizefacs, './sizefacs_test.csv')
 
