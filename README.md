@@ -40,6 +40,7 @@ The loop-associated analysis is split across three notebooks:
 ## Data Access
 
 The raw data and processed files associated with this analysis are available through GEO (accession number pending).
+ChIP-seq data aggregated over loops and boundaries is available in `CSE_adata.h5ad`, including metadata for each ChIP-seq sample, as well as annotations of loop anchors and clusters for each CSE.
 
 ## Contact
 
